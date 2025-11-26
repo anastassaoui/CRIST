@@ -50,7 +50,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-
+..pdf
 # Translations
 *.mo
 *.pot
@@ -179,3 +179,8 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+.claude
+
+build_docs.bat
+IMPLEMENTATION_PLAN.md
+rapport

@@ -1,0 +1,56 @@
+# Docker Ignore for CRIST
+# Reduces image size by excluding unnecessary files
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Virtual environments
+.venv
+venv
+env
+.env
+
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+.claude
+
+# Documentation build
+docs/_build
+docs/build
+
+# Local development
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist
+build
+*.egg-info
+
+# Test files
+tests
+*.test.py
+.pytest_cache
+.coverage
+
+# Reports folder (if contains generated files)
+rapport/*.pdf
+
+# Development files
+IMPLEMENTATION_PLAN.md
+build_docs.bat
+requirements-docs.txt

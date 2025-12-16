@@ -1,0 +1,139 @@
+@startuml CRIST_Architecture
+!theme cerulean-outline
+
+title CRIST - Evaporation & Crystallization Simulator\nProject Architecture Diagram
+
+' ============================================================================
+' PRESENTATION LAYER (Streamlit Pages)
+' ============================================================================
+package "Presentation Layer (Streamlit)" #LightBlue {
+    
+    component [app.py\n---\nMain Entry Point\n• Authentication\n• Session State\n• Navigation] as App
+    
+    package "Pages" #AliceBlue {
+        component [1_Home.py\n---\nProject Overview] as Home
+        component [2_Evaporator.py\n---\nMEE Simulation\n• Configuration\n• Sensitivity Analysis] as Evaporator
+        component [3_Crystallization.py\n---\nBatch Crystallizer\n• PBE Simulation\n• Strategy Comparison\n• Equipment Sizing] as Crystallization
+        component [4_Optimization.py\n---\nTAC Optimization\n• Steam Minimization\n• Cost Minimization] as Optimization
+        component [5_Integration.py\n---\nPinch Analysis\n• Heat Recovery\n• Economic Analysis] as Integration
+        component [6_Results.py\n---\nDashboard\n• Export Excel/PDF] as Results
+    }
+}
+
+' ============================================================================
+' BUSINESS LOGIC LAYER (Core Modules)
+' ============================================================================
+package "Business Logic Layer (src/)" #LightGreen {
+    
+    component [evaporateurs.py\n---\nMultiEffectEvaporator\n• Mass Balance\n• Energy Balance\n• Area Calculation\n• Steam Economy] as MEE
+    
+    component [cristallisation.py\n---\nBatchCrystallizer\n• Population Balance (PBE)\n• Method of Moments\n• Nucleation/Growth\n• Cooling Strategies\n• Equipment Sizing] as Cryst
+    
+    component [optimisation.py\n---\nEvaporatorOptimizer\nIntegratedOptimizer\n• TAC Calculation\n• CAPEX/OPEX\n• Simulation-Based\n  Optimization] as Opt
+    
+    component [thermodynamique.py\n---\nSugarSolution\nSteamProperties\n• Solubility\n• BPE Elevation\n• Viscosity\n• Enthalpy] as Thermo
+    
+    component [visualization.py\n---\nPlotly Charts\n• Temperature Profile\n• CSD Plots\n• Pinch Curves\n• Cost Breakdown] as Viz
+    
+    component [export.py\n---\nExcel Reports\nPDF Reports\n• Formatted Tables\n• Charts] as Export
+    
+    component [auth.py\n---\nAuthentication\n• Login/Logout\n• Sidebar Menu\n• Page Protection] as Auth
+}
+
+' ============================================================================
+' CONFIGURATION LAYER
+' ============================================================================
+package "Configuration" #LightYellow {
+    component [config.py\n---\nProcess Parameters\n• Feed Conditions\n• Steam Properties\n• Crystallizer Settings\n• Economic Factors] as Config
+    
+    component [.streamlit/secrets.toml\n---\nCredentials\n(local dev)] as Secrets
+}
+
+' ============================================================================
+' EXTERNAL DEPENDENCIES
+' ============================================================================
+package "External Libraries" #LightGray {
+    component [CoolProp\n---\nSteam Properties\nThermodynamics] as CoolProp
+    
+    component [SciPy\n---\nfsolve (equations)\nodeint (ODE)\noptimize] as SciPy
+    
+    component [NumPy/Pandas\n---\nNumerical\nData Handling] as NumPy
+    
+    component [Plotly\n---\nInteractive\nVisualization] as Plotly
+    
+    component [streamlit-antd-components\n---\nBeautiful UI\nSidebar Menu] as SAC
+}
+
+' ============================================================================
+' DEPLOYMENT
+' ============================================================================
+cloud "Deployment" #MistyRose {
+    component [Docker\n---\nContainer Image\nanastassaoui/crist-app] as Docker
+    
+    component [Render\n---\nCloud Hosting\nPort 10000] as Render
+}
+
+' ============================================================================
+' RELATIONSHIPS
+' ============================================================================
+
+' App to Pages
+App --> Home : navigates
+App --> Evaporator
+App --> Crystallization
+App --> Optimization
+App --> Integration
+App --> Results
+
+' Pages to Business Logic
+Evaporator --> MEE : uses
+Evaporator --> Viz : plots
+Evaporator --> Thermo : properties
+
+Crystallization --> Cryst : uses
+Crystallization --> Viz : plots
+Crystallization --> Thermo : solubility
+
+Optimization --> Opt : uses
+Optimization --> MEE : simulates
+Optimization --> Viz : plots
+
+Integration --> Opt : uses
+Integration --> MEE : reads results
+Integration --> Viz : plots
+
+Results --> Export : generates
+Results --> Viz : displays
+
+' Business Logic Dependencies
+MEE --> Thermo : steam/BPE
+MEE --> Config : parameters
+Cryst --> Thermo : solubility
+Opt --> MEE : evaporator model
+Opt --> Config : costs
+
+' Auth
+App --> Auth : login
+Home --> Auth : protected
+Evaporator --> Auth
+Crystallization --> Auth
+Optimization --> Auth
+Integration --> Auth
+Results --> Auth
+
+' External Dependencies
+Thermo --> CoolProp : vapor properties
+MEE --> SciPy : fsolve
+Cryst --> SciPy : odeint
+Viz --> Plotly : charts
+Auth --> SAC : menu styling
+
+' Deployment
+Docker --> App : packages
+Docker --> Render : deploys
+
+' Config
+App --> Config : loads
+App --> Secrets : credentials
+
+@enduml

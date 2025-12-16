@@ -6,8 +6,13 @@ import streamlit as st
 import pandas as pd
 from src.optimisation import IntegratedOptimizer
 from src.visualization import plot_pinch_curves, plot_cost_breakdown
+from src.auth import require_auth, add_sidebar_menu
 
-st.set_page_config(page_title="Integration", page_icon="🔗", layout="wide")
+st.set_page_config(page_title="Integration", page_icon="I", layout="wide")
+
+# Require authentication
+require_auth()
+add_sidebar_menu('Integration')
 
 # Initialize session state
 if 'evaporator_results' not in st.session_state:
@@ -21,7 +26,7 @@ st.title("Heat Integration & Economic Analysis")
 st.markdown("Pinch analysis for heat recovery and complete plant economic evaluation")
 
 # Theory section
-with st.expander("📚 Theory: Pinch Analysis & Process Integration", expanded=False):
+with st.expander("Theory: Pinch Analysis & Process Integration", expanded=False):
     st.markdown("""
     ## What is Process Integration?
 
@@ -52,9 +57,9 @@ with st.expander("📚 Theory: Pinch Analysis & Process Integration", expanded=F
     - $Q_{hot,available}$: Total heat available from hot streams (W)
     - $Q_{cold,required}$: Total heat required by cold streams (W)
 
-    **Minimum temperature approach** ($\\Delta T_{min}$):
+    **Minimum temperature approach** ($\Delta T_{min}$):
     """)
-    st.latex(r"\Delta T_{min} = 10 \, ^\circ \text{C}")
+    st.latex(r"\Delta T_{min} = 10 \degree C")
 
     st.markdown("""
     Thermodynamic constraint: hot stream temperature must be at least 10°C above cold stream for heat transfer.
@@ -68,29 +73,29 @@ with st.expander("📚 Theory: Pinch Analysis & Process Integration", expanded=F
     st.markdown("""
     **Required area**:
     """)
-    st.latex(r"A = \\frac{Q}{U \cdot \Delta T_{LM}}")
+    st.latex(r"A = \frac{Q}{U \cdot \Delta T_{LM}}")
 
     st.markdown("""
     Where:
     - $U$: Overall heat transfer coefficient (typically 500-1000 W/m²·K)
     - $A$: Heat exchanger area (m²)
-    - $\\Delta T_{LM}$: Log-mean temperature difference (K)
+    - $\Delta T_{LM}$: Log-mean temperature difference (K)
 
     **Log-mean temperature difference**:
     """)
-    st.latex(r"\Delta T_{LM} = \\frac{(T_{h,in} - T_{c,out}) - (T_{h,out} - T_{c,in})}{\ln\\left(\\frac{T_{h,in} - T_{c,out}}{T_{h,out} - T_{c,in}}\\right)}")
+    st.latex(r"\Delta T_{LM} = \frac{(T_{h,in} - T_{c,out}) - (T_{h,out} - T_{c,in})}{\ln\left(\frac{T_{h,in} - T_{c,out}}{T_{h,out} - T_{c,in}}\right)}")
 
     st.markdown("""
     ### Economic Benefits
 
     **Steam savings**:
     """)
-    st.latex(r"\Delta \dot{m}_{steam} = \\frac{Q_{recoverable}}{\lambda_{steam}}")
+    st.latex(r"\Delta \dot{m}_{steam} = \frac{Q_{recoverable}}{\lambda_{steam}}")
 
     st.markdown("""
     **Annual cost savings**:
     """)
-    st.latex(r"\text{Savings} = \Delta \dot{m}_{steam} \\times h_{op} \\times c_{steam}")
+    st.latex(r"\text{Savings} = \Delta \dot{m}_{steam} \times h_{op} \times c_{steam}")
 
     st.markdown("""
     **Additional heat exchanger cost**:
@@ -100,7 +105,7 @@ with st.expander("📚 Theory: Pinch Analysis & Process Integration", expanded=F
     st.markdown("""
     **Payback period**:
     """)
-    st.latex(r"\\text{Payback} = \\frac{\text{CAPEX}_{HEX}}{\text{Annual Savings}}")
+    st.latex(r"\text{Payback} = \frac{\text{CAPEX}_{HEX}}{\text{Annual Savings}}")
 
     st.markdown("""
     **Typical results**:
@@ -123,7 +128,7 @@ with st.expander("📚 Theory: Pinch Analysis & Process Integration", expanded=F
     st.markdown("""
     **Annual Revenue** (sugar sales):
     """)
-    st.latex(r"\text{Revenue} = m_{sugar} \\times c_{sugar}")
+    st.latex(r"\text{Revenue} = m_{sugar} \times c_{sugar}")
 
     st.markdown("""
     **Annual Profit**:
@@ -133,12 +138,12 @@ with st.expander("📚 Theory: Pinch Analysis & Process Integration", expanded=F
     st.markdown("""
     **Net Present Value** (NPV, 10 years, 5% discount):
     """)
-    st.latex(r"NPV = -\text{CAPEX} + \sum_{t=1}^{10} \\frac{\text{Profit}_t}{(1+0.05)^t}")
+    st.latex(r"NPV = -\text{CAPEX} + \sum_{t=1}^{10} \frac{\text{Profit}_t}{(1+0.05)^t}")
 
     st.markdown("""
     **Return on Investment** (ROI):
     """)
-    st.latex(r"ROI = \\frac{\text{NPV}}{\text{CAPEX}} \\times 100\\%")
+    st.latex(r"ROI = \frac{\text{NPV}}{\text{CAPEX}} \times 100\%")
 
     st.markdown("""
     ### Implementation

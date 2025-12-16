@@ -6,8 +6,13 @@ import streamlit as st
 import pandas as pd
 import config
 from src.optimisation import EvaporatorOptimizer
+from src.auth import require_auth, add_sidebar_menu
 
-st.set_page_config(page_title="Optimization", page_icon="🔧", layout="wide")
+st.set_page_config(page_title="Optimization", page_icon="O", layout="wide")
+
+# Require authentication
+require_auth()
+add_sidebar_menu('Optimization')
 
 # Initialize session state
 if 'optimization_results' not in st.session_state:
@@ -19,7 +24,7 @@ st.title("Process Optimization")
 st.markdown("Compare different configurations by running simulations and calculating costs")
 
 # Theory section
-with st.expander("📚 Theory: Simulation-Based Optimization & Cost Modeling", expanded=False):
+with st.expander("Theory: Simulation-Based Optimization & Cost Modeling", expanded=False):
     st.markdown("""
     ## Optimization Approach
 
@@ -36,13 +41,13 @@ with st.expander("📚 Theory: Simulation-Based Optimization & Cost Modeling", e
 
     Equipment cost follows **economy of scale**:
     """)
-    st.latex(r"\text{Cost}_{equipment} = C_{base} \cdot (\text{Size})^\\alpha")
+    st.latex(r"\text{Cost}_{equipment} = C_{base} \cdot (\text{Size})^\alpha")
 
     st.markdown("""
     Where:
     - $C_{base}$: Base equipment cost (€)
-    - $\\text{Size}$: Equipment size (area for evaporators, volume for crystallizers)
-    - $\\alpha$: Cost exponent (0.6-0.7, reflects economy of scale)
+    - $\text{Size}$: Equipment size (area for evaporators, volume for crystallizers)
+    - $\alpha$: Cost exponent (0.6-0.7, reflects economy of scale)
 
     **Evaporator CAPEX**:
     """)
@@ -63,13 +68,13 @@ with st.expander("📚 Theory: Simulation-Based Optimization & Cost Modeling", e
 
     **Annual steam cost**:
     """)
-    st.latex(r"\text{OPEX}_{steam} = \dot{m}_{steam} \\times h_{op} \\times c_{steam}")
+    st.latex(r"\text{OPEX}_{steam} = \dot{m}_{steam} \times h_{op} \times c_{steam}")
 
     st.markdown("""
     Where:
-    - $\\dot{m}_{steam}$: Steam consumption (kg/h)
+    - $\dot{m}_{steam}$: Steam consumption (kg/h)
     - $h_{op}$: Operating hours per year (typically 8000 h/year)
-    - $c_{steam}$: Steam cost (25 €/tonne for 3.5 bar steam)
+    - $c_{steam}$: Steam cost (25 Euro/tonne for 3.5 bar steam)
 
     **Other OPEX components**:
     - Cooling water: 0.15 €/m³
@@ -84,13 +89,13 @@ with st.expander("📚 Theory: Simulation-Based Optimization & Cost Modeling", e
     st.markdown("""
     **Annualization factor** (converts capital cost to annual payment):
     """)
-    st.latex(r"f_{ann} = \\frac{i(1+i)^n}{(1+i)^n - 1}")
+    st.latex(r"f_{ann} = \frac{i(1+i)^n}{(1+i)^n - 1}")
 
     st.markdown("""
     Where:
     - $i$: Interest rate (typically 5%)
     - $n$: Plant lifetime (typically 10 years)
-    - For $i=5\\%$, $n=10$ years: $f_{ann} \\approx 0.13$
+    - For i=5%, n=10 years: f_ann is approximately 0.13
 
     ### Optimization Objective
 

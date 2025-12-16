@@ -7,8 +7,13 @@ import pandas as pd
 import traceback
 from datetime import datetime
 from src.export import create_excel_report, create_pdf_report
+from src.auth import require_auth, add_sidebar_menu
 
-st.set_page_config(page_title="Results", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Results", page_icon="R", layout="wide")
+
+# Require authentication
+require_auth()
+add_sidebar_menu('Results')
 
 # Initialize session state
 if 'evaporator_results' not in st.session_state:
@@ -119,7 +124,7 @@ st.markdown("## Export Results")
 col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("📊 Export to Excel", type="primary", use_container_width=True):
+    if st.button("Export to Excel", type="primary", use_container_width=True):
         with st.spinner("Generating Excel report..."):
             try:
                 excel_file = create_excel_report(
@@ -130,7 +135,7 @@ with col1:
                 )
 
                 st.download_button(
-                    label="💾 Download Excel Report",
+                    label="Download Excel Report",
                     data=excel_file,
                     file_name=f"process_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -142,7 +147,7 @@ with col1:
                 st.code(traceback.format_exc())
 
 with col2:
-    if st.button("📄 Generate PDF Report", type="primary", use_container_width=True):
+    if st.button("Generate PDF Report", type="primary", use_container_width=True):
         with st.spinner("Generating PDF report..."):
             try:
                 pdf_file = create_pdf_report(
@@ -153,7 +158,7 @@ with col2:
                 )
 
                 st.download_button(
-                    label="💾 Download PDF Report",
+                    label="Download PDF Report",
                     data=pdf_file,
                     file_name=f"process_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                     mime="application/pdf",

@@ -11,10 +11,19 @@ import config
 # Page configuration
 st.set_page_config(
     page_title="Evaporation & Crystallization Simulator",
-    page_icon="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>",
+    page_icon="EC",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Hide default Streamlit page navigation (we use our custom menu)
+st.markdown("""
+    <style>
+        [data-testid="stSidebarNav"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # Initialize session state
 if 'evaporator_results' not in st.session_state:
@@ -29,6 +38,119 @@ if 'optimization_results' not in st.session_state:
 if 'integration_results' not in st.session_state:
     st.session_state.integration_results = None
 
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# ============================================================================
+# AUTHENTICATION
+# ============================================================================
+import os
+
+def get_credentials():
+    """Get credentials from environment variables or secrets.toml"""
+    # First try environment variables (for Docker/Render deployment)
+    username = os.environ.get('CRIST_USERNAME')
+    password = os.environ.get('CRIST_PASSWORD')
+    
+    if username and password:
+        return username, password
+    
+    # Fall back to secrets.toml (for local development)
+    try:
+        return st.secrets["auth"]["username"], st.secrets["auth"]["password"]
+    except (KeyError, FileNotFoundError):
+        # Default credentials if nothing is configured
+        return "admin", "crist2024"
+
+def check_password():
+    """Returns True if the user has entered correct credentials."""
+    
+    expected_username, expected_password = get_credentials()
+    
+    def password_entered():
+        """Checks whether the password entered by the user is correct."""
+        if (
+            st.session_state["username"] == expected_username
+            and st.session_state["password"] == expected_password
+        ):
+            st.session_state.authenticated = True
+            del st.session_state["password"]  # Don't store password
+            del st.session_state["username"]
+        else:
+            st.session_state.authenticated = False
+            st.session_state["login_error"] = True
+
+    # First run or not authenticated
+    if not st.session_state.authenticated:
+        st.title("Login Required")
+        st.markdown("Please enter your credentials to access the application.")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            with st.form("login_form"):
+                st.text_input("Username", key="username")
+                st.text_input("Password", type="password", key="password")
+                submitted = st.form_submit_button("Login", type="primary", use_container_width=True)
+                if submitted:
+                    password_entered()
+            
+            if st.session_state.get("login_error"):
+                st.error("Invalid username or password")
+        
+        return False
+    
+    return True
+
+# Check authentication before showing any content
+if not check_password():
+    st.stop()
+
+# ============================================================================
+# MAIN APPLICATION (only accessible after authentication)
+# ============================================================================
+
+import streamlit_antd_components as sac
+
+# Beautiful sidebar with antd components
+with st.sidebar:
+    st.markdown("## Navigation")
+    
+    selected = sac.menu([
+        sac.MenuItem('Home', icon='house-fill'),
+        sac.MenuItem('Simulation', icon='cpu-fill', children=[
+            sac.MenuItem('Evaporator', icon='droplet-fill'),
+            sac.MenuItem('Crystallization', icon='gem'),
+        ]),
+        sac.MenuItem('Analysis', icon='graph-up', children=[
+            sac.MenuItem('Optimization', icon='gear-fill'),
+            sac.MenuItem('Integration', icon='link-45deg'),
+        ]),
+        sac.MenuItem('Results', icon='file-earmark-bar-graph-fill'),
+        sac.MenuItem(type='divider'),
+        sac.MenuItem('Logout', icon='box-arrow-right', disabled=False),
+    ], open_all=True, index=0)
+    
+    # Handle logout
+    if selected == 'Logout':
+        st.session_state.authenticated = False
+        st.rerun()
+    
+    # Navigate to selected page
+    if selected == 'Evaporator':
+        st.switch_page("pages/2_Evaporator.py")
+    elif selected == 'Crystallization':
+        st.switch_page("pages/3_Crystallization.py")
+    elif selected == 'Optimization':
+        st.switch_page("pages/4_Optimization.py")
+    elif selected == 'Integration':
+        st.switch_page("pages/5_Integration.py")
+    elif selected == 'Results':
+        st.switch_page("pages/6_Results.py")
+    
+    st.markdown("---")
+    st.markdown("**CRIST Simulator**")
+    st.caption("FST Settat 2024-2025")
+
 # Main page content
 st.title("Evaporation & Crystallization Simulator")
 st.markdown("### Multi-Effect Evaporator and Batch Crystallizer Design Tool")
@@ -39,7 +161,7 @@ st.markdown("---")
 st.info("Select a page from the sidebar to begin simulation and optimization.")
 
 # Project overview
-with st.expander("📖 About This Project", expanded=True):
+with st.expander("About This Project", expanded=True):
     st.markdown("""
     ## Overview
 

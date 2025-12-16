@@ -13,8 +13,13 @@ from src.visualization import (
     plot_pressure_profile,
     plot_sensitivity_analysis
 )
+from src.auth import require_auth, add_sidebar_menu
 
-st.set_page_config(page_title="Evaporator", page_icon="💧", layout="wide")
+st.set_page_config(page_title="Evaporator", page_icon="E", layout="wide")
+
+# Require authentication
+require_auth()
+add_sidebar_menu('Evaporator')
 
 # Initialize session state
 if 'evaporator_results' not in st.session_state:
@@ -24,7 +29,7 @@ st.title("Multi-Effect Evaporator Simulation")
 st.markdown("Configure and simulate multi-effect evaporation system for sugar cane juice concentration")
 
 # Theory section
-with st.expander("📚 Theory: Multi-Effect Evaporation", expanded=False):
+with st.expander("Theory: Multi-Effect Evaporation", expanded=False):
     st.markdown("""
     ## Principle of Operation
 
@@ -57,11 +62,11 @@ with st.expander("📚 Theory: Multi-Effect Evaporation", expanded=False):
     st.markdown("""
     Where:
     - $Q$: Heat duty (W)
-    - $\\dot{m}_{heating}$: Mass flow of heating steam/vapor (kg/s)
-    - $\\lambda$: Latent heat of condensation (J/kg)
-    - $U$: Overall heat transfer coefficient (W/m²·K)
-    - $A$: Heat transfer area (m²)
-    - $\\Delta T_{LM}$: Log-mean temperature difference (K)
+    - $\dot{m}_{heating}$: Mass flow of heating steam/vapor (kg/s)
+    - $\lambda$: Latent heat of condensation (J/kg)
+    - $U$: Overall heat transfer coefficient (W/m2.K)
+    - $A$: Heat transfer area (m2)
+    - $\Delta T_{LM}$: Log-mean temperature difference (K)
 
     ### Log-Mean Temperature Difference
     """)

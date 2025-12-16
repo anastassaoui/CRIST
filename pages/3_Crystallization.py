@@ -13,8 +13,13 @@ from src.visualization import (
     plot_supersaturation_evolution,
     plot_comparison_bar_chart
 )
+from src.auth import require_auth, add_sidebar_menu
 
-st.set_page_config(page_title="Crystallization", page_icon="💎", layout="wide")
+st.set_page_config(page_title="Crystallization", page_icon="C", layout="wide")
+
+# Require authentication
+require_auth()
+add_sidebar_menu('Crystallization')
 
 # Initialize session state
 if 'crystallizer_results' not in st.session_state:
@@ -26,7 +31,7 @@ st.title("Batch Crystallizer Simulation")
 st.markdown("Model sucrose crystal growth from supersaturated syrup using Population Balance Equations (PBE)")
 
 # Theory section
-with st.expander("📚 Theory: Batch Crystallization & Population Balance", expanded=False):
+with st.expander("Theory: Batch Crystallization & Population Balance", expanded=False):
     st.markdown("""
     ## Principle of Operation
 
@@ -53,8 +58,8 @@ with st.expander("📚 Theory: Batch Crystallization & Population Balance", expa
     Coefficients from experimental data:
     - $a = 64.18$
     - $b = 0.1337$
-    - $c = 5.52 \\times 10^{-3}$
-    - $d = -9.73 \\times 10^{-6}$
+    - $c = 5.52 \times 10^{-3}$
+    - $d = -9.73 \times 10^{-6}$
 
     ### Nucleation Kinetics
 
@@ -65,7 +70,7 @@ with st.expander("📚 Theory: Batch Crystallization & Population Balance", expa
     st.markdown("""
     Where:
     - $B$: Nucleation rate (nuclei/m³·s)
-    - $k_b = 1.5 \\times 10^{10}$: Nucleation rate constant
+    - $k_b = 1.5 \times 10^{10}$: Nucleation rate constant
     - $b = 2.5$: Supersaturation order
     - $j = 0.5$: Crystal mass order
     - $m_T$: Total crystal mass in suspension (kg)
@@ -81,7 +86,7 @@ with st.expander("📚 Theory: Batch Crystallization & Population Balance", expa
     st.markdown("""
     Where:
     - $G$: Linear growth rate (m/s)
-    - $k_g = 2.8 \\times 10^{-7}$: Growth rate constant
+    - $k_g = 2.8 \times 10^{-7}$: Growth rate constant
     - $g = 1.5$: Supersaturation order
     - $E_g = 45000$ J/mol: Activation energy
     - $R = 8.314$ J/(mol·K): Gas constant
@@ -91,12 +96,12 @@ with st.expander("📚 Theory: Batch Crystallization & Population Balance", expa
 
     Tracks the evolution of crystal size distribution (CSD) over time:
     """)
-    st.latex(r"\\frac{\\partial n}{\\partial t} + G \\frac{\\partial n}{\\partial L} = 0")
+    st.latex(r"\frac{\partial n}{\partial t} + G \frac{\partial n}{\partial L} = 0")
 
     st.markdown("""
     With boundary condition (nucleation):
     """)
-    st.latex(r"n(L=0, t) = \\frac{B}{G}")
+    st.latex(r"n(L=0, t) = \frac{B}{G}")
 
     st.markdown("""
     Where:
@@ -109,39 +114,39 @@ with st.expander("📚 Theory: Batch Crystallization & Population Balance", expa
 
     **0th moment** (total number):
     """)
-    st.latex(r"\mu_0 = \\int_0^\\infty n(L) \, dL")
+    st.latex(r"\mu_0 = \int_0^\infty n(L) \, dL")
 
     st.markdown("""
     **1st moment** (length-weighted):
     """)
-    st.latex(r"\mu_1 = \\int_0^\\infty L \cdot n(L) \, dL")
+    st.latex(r"\mu_1 = \int_0^\infty L \cdot n(L) \, dL")
 
     st.markdown("""
     **2nd moment** (area-weighted):
     """)
-    st.latex(r"\mu_2 = \\int_0^\\infty L^2 \cdot n(L) \, dL")
+    st.latex(r"\mu_2 = \int_0^\infty L^2 \cdot n(L) \, dL")
 
     st.markdown("""
     **3rd moment** (volume/mass-weighted):
     """)
-    st.latex(r"\mu_3 = \\int_0^\\infty L^3 \cdot n(L) \, dL")
+    st.latex(r"\mu_3 = \int_0^\infty L^3 \cdot n(L) \, dL")
 
     st.markdown("""
     ### Key Performance Indicators
 
     **Mean Crystal Size (L₅₀)**:
     """)
-    st.latex(r"L_{50} = \\frac{\mu_1}{\mu_0}")
+    st.latex(r"L_{50} = \frac{\mu_1}{\mu_0}")
 
     st.markdown("""
     **Coefficient of Variation (CV)**:
     """)
-    st.latex(r"CV = \\frac{\sigma}{L_{50}} = \\frac{\sqrt{\mu_2/\mu_0 - (\\mu_1/\\mu_0)^2}}{\mu_1/\\mu_0}")
+    st.latex(r"CV = \frac{\sigma}{L_{50}} = \frac{\sqrt{\mu_2/\mu_0 - (\mu_1/\mu_0)^2}}{\mu_1/\mu_0}")
 
     st.markdown("""
     **Mass Yield**:
     """)
-    st.latex(r"\\text{Yield} = \\frac{C_{initial} - C_{final}}{C_{initial} - C^*(T_{final})}")
+    st.latex(r"\text{Yield} = \frac{C_{initial} - C_{final}}{C_{initial} - C^*(T_{final})}")
 
     st.markdown("""
     **Targets for sugar production**:
@@ -153,14 +158,14 @@ with st.expander("📚 Theory: Batch Crystallization & Population Balance", expa
 
     **1. Linear Cooling**:
     """)
-    st.latex(r"T(t) = T_{initial} - \\frac{(T_{initial} - T_{final})}{t_{batch}} \cdot t")
+    st.latex(r"T(t) = T_{initial} - \frac{(T_{initial} - T_{final})}{t_{batch}} \cdot t")
 
     st.markdown("""
     Simple to implement, but creates high supersaturation early → excessive nucleation → small crystals
 
     **2. Exponential Cooling**:
     """)
-    st.latex(r"T(t) = T_{final} + (T_{initial} - T_{final}) \\cdot e^{-kt}")
+    st.latex(r"T(t) = T_{final} + (T_{initial} - T_{final}) \cdot e^{-kt}")
 
     st.markdown("""
     Slower cooling early, faster late. Better control of supersaturation.
@@ -374,7 +379,7 @@ with tab3:
     st.subheader("Crystallizer Equipment Sizing")
 
     # Theory section for sizing
-    with st.expander("📚 Theory: Crystallizer Equipment Design", expanded=False):
+    with st.expander("Theory: Crystallizer Equipment Design", expanded=False):
         st.markdown("""
         ## Batch Crystallizer Sizing
 
@@ -388,14 +393,14 @@ with tab3:
 
         **Design basis**: 5000 kg/batch (from specifications)
         """)
-        st.latex(r"V = \\frac{m_{batch}}{\\rho_{solution}}")
+        st.latex(r"V = \frac{m_{batch}}{\rho_{solution}}")
 
         st.markdown("""
         Where:
         - $m_{batch}$ = Batch mass (kg)
-        - $\\rho_{solution}$ ≈ 1200 kg/m³ (concentrated sugar solution)
+        - $\rho_{solution}$ = 1200 kg/m3 (concentrated sugar solution)
 
-        **Typical**: Add 20% freeboard for safety → $V_{total} = 1.2 \\times V_{working}$
+        **Typical**: Add 20% freeboard for safety: $V_{total} = 1.2 \times V_{working}$
 
         ### 2. Agitation Power
 
@@ -406,12 +411,12 @@ with tab3:
 
         **Power correlation**:
         """)
-        st.latex(r"P = N_p \\cdot \\rho \\cdot N^3 \\cdot D^5")
+        st.latex(r"P = N_p \cdot \rho \cdot N^3 \cdot D^5")
 
         st.markdown("""
         Where:
         - $N_p$ = Power number (1.5 for pitched blade turbine)
-        - $\\rho$ = Solution density (kg/m³)
+        - $\rho$ = Solution density (kg/m3)
         - $N$ = Rotation speed (rev/s)
         - $D$ = Impeller diameter (m)
 
@@ -422,28 +427,28 @@ with tab3:
 
         **Reynolds number**:
         """)
-        st.latex(r"Re = \\frac{\\rho \\cdot N \\cdot D^2}{\\mu}")
+        st.latex(r"Re = \frac{\rho \cdot N \cdot D^2}{\mu}")
 
         st.markdown("""
-        Where $\\mu$ ≈ 0.01 Pa·s (viscosity of concentrated sugar solution)
+        Where $\mu$ = 0.01 Pa.s (viscosity of concentrated sugar solution)
 
         ### 3. Cooling System Sizing
 
         **Heat duty** (total heat to remove):
         """)
-        st.latex(r"Q_{total} = m_{batch} \\cdot c_p \\cdot (T_{initial} - T_{final})")
+        st.latex(r"Q_{total} = m_{batch} \cdot c_p \cdot (T_{initial} - T_{final})")
 
         st.markdown("""
         Where $c_p$ ≈ 3500 J/(kg·K) for sugar solution
 
         **Average cooling power**:
         """)
-        st.latex(r"\\dot{Q}_{avg} = \\frac{Q_{total}}{t_{batch}}")
+        st.latex(r"\dot{Q}_{avg} = \frac{Q_{total}}{t_{batch}}")
 
         st.markdown("""
         **Heat exchanger area** (for jacket or internal coil):
         """)
-        st.latex(r"A = \\frac{\\dot{Q}_{avg}}{U \\cdot \\Delta T_{LM}}")
+        st.latex(r"A = \frac{\dot{Q}_{avg}}{U \cdot \Delta T_{LM}}")
 
         st.markdown("""
         Where:
@@ -452,7 +457,7 @@ with tab3:
 
         **LMTD**:
         """)
-        st.latex(r"\\Delta T_{LM} = \\frac{(T_{hot,in} - T_{cool,out}) - (T_{hot,out} - T_{cool,in})}{\\ln\\left(\\frac{T_{hot,in} - T_{cool,out}}{T_{hot,out} - T_{cool,in}}\\right)}")
+        st.latex(r"\Delta T_{LM} = \frac{(T_{hot,in} - T_{cool,out}) - (T_{hot,out} - T_{cool,in})}{\ln\left(\frac{T_{hot,in} - T_{cool,out}}{T_{hot,out} - T_{cool,in}}\right)}")
 
         st.markdown("""
         **Cooling water** (typically 15°C inlet, 25°C outlet)
@@ -468,12 +473,12 @@ with tab3:
 
         **Batches per day**:
         """)
-        st.latex(r"n_{batches/day} = \\frac{24}{t_{cycle}}")
+        st.latex(r"n_{batches/day} = \frac{24}{t_{cycle}}")
 
         st.markdown("""
         **Annual production**:
         """)
-        st.latex(r"\\text{Production} = n_{batches/day} \\times m_{crystals/batch} \\times 330 \\, \\text{days/year}")
+        st.latex(r"\text{Production} = n_{batches/day} \times m_{crystals/batch} \times 330 \, \text{days/year}")
 
         st.markdown("""
         Where $m_{crystals/batch}$ = Crystallized mass per batch (depends on yield)

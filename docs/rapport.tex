@@ -1,0 +1,735 @@
+% ============================================================================
+% RAPPORT TECHNIQUE COMPLET - CRIST
+% Simulateur d'Évaporation Multi-Effet et Cristallisation Industrielle
+% FST Settat - Génie des Procédés - 2024/2025
+% ============================================================================
+
+\documentclass[12pt,a4paper,twoside]{article}
+
+% Encodage et langue
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% Mathématiques avancées
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% Tableaux professionnels
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+
+% Typographie
+\usepackage{microtype}
+\usepackage{lettrine}
+\usepackage{enumitem}
+
+% Références et liens
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=green!50!black,urlcolor=blue!70!black]{hyperref}
+
+% Notes de bas de page
+\usepackage[bottom]{footmisc}
+
+% Couleurs personnalisées
+\definecolor{cristblue}{RGB}{0,82,147}
+\definecolor{cristgreen}{RGB}{39,174,96}
+
+% En-têtes et pieds de page
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[LO]{\leftmark}
+\fancyhead[RE]{CRIST - Rapport Technique}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Style des sections
+\titleformat{\section}{\normalfont\Large\bfseries\color{cristblue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{cristblue!80}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% ============================================================================
+\begin{document}
+
+% PAGE DE TITRE
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+{\scshape\LARGE Faculté des Sciences et Techniques\par}
+{\scshape\large Settat -- Maroc\par}
+\vspace{1.5cm}
+\rule{\textwidth}{2pt}\par
+\vspace{0.6cm}
+{\Huge\bfseries\color{cristblue} CRIST\par}
+\vspace{0.4cm}
+{\Large\itshape Simulateur d'Évaporation Multi-Effet\\et Cristallisation Industrielle\par}
+\vspace{0.4cm}
+\rule{\textwidth}{2pt}\par
+\vspace{1.5cm}
+{\Large\bfseries Rapport Technique Exhaustif\par}
+\vspace{0.3cm}
+{\large Modélisation Mathématique, Architecture Logicielle,\\Interface Utilisateur et Déploiement Cloud\par}
+\vfill
+{\large
+\begin{tabular}{rl}
+\textbf{Filière :} & Génie des Procédés Industriels \\
+\textbf{Module :} & Projet de Fin d'Études \\
+\textbf{Encadrant :} & Pr. [Nom] \\
+\textbf{Année Universitaire :} & 2024 -- 2025 \\
+\end{tabular}
+}
+\vspace{1.5cm}
+{\small Document généré le \today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction Générale}
+% ============================================================================
+
+\lettrine[lines=3, findent=3pt, nindent=0pt]{L}{}a concentration des solutions sucrées par évaporation multi-effet et la cristallisation du saccharose constituent des opérations unitaires fondamentales dans l'industrie sucrière mondiale\footnote{Ces procédés représentent environ 40\% de la consommation énergétique totale d'une sucrerie.}. L'optimisation de ces procédés revêt une importance économique majeure, tant en termes de réduction de la consommation énergétique que d'amélioration de la qualité des produits cristallins obtenus.
+
+Le projet CRIST (\textit{CRystallization and Integrated Simulation Tool}) constitue une application web complète permettant la simulation, l'analyse et l'optimisation technico-économique d'un système intégré d'évaporation-cristallisation\footnote{Développé intégralement en Python avec le framework Streamlit et déployé via conteneurisation Docker sur la plateforme Render.}.
+
+\subsection{Contexte Industriel}
+
+L'industrie sucrière marocaine traite annuellement plus de 3 millions de tonnes de betteraves sucrières\footnote{Source : COSUMAR, rapport annuel 2023.}. L'évaporation multi-effet permet de concentrer le jus sucré de 14\% à 65\% de matière sèche, tandis que la cristallisation produit le sucre cristallisé final. L'intégration thermique de ces deux opérations représente un potentiel d'économie d'énergie considérable.
+
+\subsection{Objectifs du Projet}
+
+Les objectifs de ce travail sont multiples :
+\begin{enumerate}[label=\roman*., noitemsep]
+    \item Développer un modèle mathématique rigoureux de l'évaporation multi-effet basé sur les bilans de matière et d'énergie
+    \item Implémenter la résolution de l'équation de bilan de population (PBE\footnote{\textit{Population Balance Equation}.}) pour la cristallisation batch
+    \item Réaliser l'analyse technico-économique incluant CAPEX\footnote{\textit{Capital Expenditure} -- Investissement initial.}, OPEX\footnote{\textit{Operating Expenditure} -- Coûts opératoires.} et TAC\footnote{\textit{Total Annualized Cost} -- Coût total annualisé.}
+    \item Effectuer l'intégration thermique par la méthode d'analyse pinch
+    \item Créer une interface utilisateur web interactive et intuitive
+    \item Déployer l'application sur une infrastructure cloud
+\end{enumerate}
+
+% ============================================================================
+\section{Modélisation de l'Évaporation Multi-Effet}
+% ============================================================================
+
+\subsection{Principe Fondamental}
+
+\lettrine[lines=2]{L}{}e système d'évaporation multi-effet exploite le principe de réutilisation de la vapeur générée dans un effet pour chauffer l'effet suivant\footnote{Ce principe thermodynamique permet d'atteindre des économies de vapeur significatives, typiquement 0.8 à 0.9 kg d'eau évaporée par kg de vapeur vive consommée.}. La configuration adoptée est le co-courant\footnote{Configuration où le liquide et la vapeur circulent dans le même sens, de l'effet à haute pression vers l'effet à basse pression. Alternative : contre-courant.}, où le gradient de pression naturel facilite l'écoulement du liquide.
+
+\subsection{Bilans de Matière}
+
+\subsubsection{Bilan Global}
+
+Pour chaque effet $i$ $(i = 1, 2, \ldots, n)$, le bilan de matière global en régime permanent s'écrit :
+
+\begin{equation}
+\boxed{F_i = L_i + V_i}
+\label{eq:mass_global}
+\end{equation}
+
+où les variables sont définies comme suit :
+\begin{itemize}[noitemsep]
+    \item $F_i$ : débit massique d'alimentation de l'effet $i$ (kg/h)
+    \item $L_i$ : débit massique de liqueur concentrée sortante (kg/h)
+    \item $V_i$ : débit massique de vapeur d'eau produite (kg/h)
+\end{itemize}
+
+\subsubsection{Bilan sur le Soluté}
+
+Le bilan de matière sur le saccharose (soluté non volatil) impose :
+
+\begin{equation}
+F_i \cdot x_i = L_i \cdot x_{i+1}
+\label{eq:mass_solute}
+\end{equation}
+
+où $x$ représente la fraction massique en saccharose. La combinaison des équations \eqref{eq:mass_global} et \eqref{eq:mass_solute} permet d'exprimer le débit de vapeur :
+
+\begin{equation}
+\boxed{V_i = F_i \left(1 - \frac{x_i}{x_{i+1}}\right)}
+\label{eq:vapor_flow}
+\end{equation}
+
+\subsection{Bilans Énergétiques}
+
+\subsubsection{Bilan Enthalpique}
+
+Le bilan énergétique de l'effet $i$ s'établit entre les flux entrant et sortant\footnote{On néglige les pertes thermiques vers l'environnement, hypothèse raisonnable pour des évaporateurs industriels bien calorifugés.} :
+
+\begin{equation}
+\boxed{Q_i = F_i \cdot C_{p,i} \cdot (T_{\text{eb},i} - T_{i,\text{in}}) + V_i \cdot \lambda_i}
+\label{eq:energy_balance}
+\end{equation}
+
+où :
+\begin{itemize}[noitemsep]
+    \item $Q_i$ : flux thermique transféré dans l'effet $i$ (kW)
+    \item $C_{p,i}$ : capacité calorifique massique de la solution (kJ/kg·K)
+    \item $T_{\text{eb},i}$ : température d'ébullition dans l'effet $i$ (°C)
+    \item $T_{i,\text{in}}$ : température d'entrée du liquide (°C)
+    \item $\lambda_i$ : chaleur latente massique de vaporisation (kJ/kg)
+\end{itemize}
+
+\subsubsection{Transfert de Chaleur}
+
+La chaleur est fournie par condensation de la vapeur de chauffage :
+
+\begin{equation}
+Q_i = V_{i-1} \cdot \lambda_{i-1} \cdot \eta_{\text{th}} = U_i \cdot A_i \cdot \Delta T_i
+\label{eq:heat_transfer}
+\end{equation}
+
+où $U_i$ est le coefficient global de transfert (W/m²·K), $A_i$ la surface d'échange (m²), et $\Delta T_i$ la force motrice thermique (K).
+
+\subsection{Propriétés Thermophysiques}
+
+\subsubsection{Élévation Ébulliométrique (BPE)}
+
+La présence de soluté dissous élève le point d'ébullition de la solution par rapport à l'eau pure\footnote{Phénomène colligatif décrit par la loi de Raoult modifiée.}. Cette élévation ébulliométrique est calculée par la corrélation empirique\footnote{Coefficients issus de \textit{Beet-Sugar Handbook}, M. Asadi, 2007.} :
+
+\begin{equation}
+\boxed{\Delta T_{\text{BPE}} = 0.2253 \, x + 0.0144 \, x^2 + 0.0011 \, x^3}
+\label{eq:bpe}
+\end{equation}
+
+La température d'ébullition réelle est donc : $T_{\text{eb}} = T_{\text{sat}}(P) + \Delta T_{\text{BPE}}$
+
+\subsubsection{Coefficient de Transfert de Chaleur}
+
+Le coefficient global $U$ dépend de la viscosité de la solution\footnote{La viscosité augmente fortement avec la concentration, réduisant le transfert de chaleur.} :
+
+\begin{equation}
+U = U_0 \cdot \left(\frac{\mu_{\text{eau}}}{\mu_{\text{solution}}}\right)^{0.33}
+\label{eq:htc}
+\end{equation}
+
+avec $U_0 \approx 2500$ W/m²·K pour un évaporateur à circulation forcée.
+
+\subsection{Économie de Vapeur}
+
+L'efficacité énergétique du système multi-effet est caractérisée par l'économie de vapeur :
+
+\begin{equation}
+\boxed{\text{SE} = \frac{\sum_{i=1}^{n} V_i}{S} \approx 0.8 \times n}
+\label{eq:steam_economy}
+\end{equation}
+
+où $S$ est le débit de vapeur vive et $n$ le nombre d'effets. Cette relation empirique\footnote{Valable pour des effets de taille sensiblement égale et des pertes minimales.} montre l'intérêt économique d'augmenter le nombre d'effets.
+
+% ============================================================================
+\section{Modélisation de la Cristallisation Batch}
+% ============================================================================
+
+\subsection{Fondements Physico-Chimiques}
+
+\lettrine[lines=2]{L}{}a cristallisation par refroidissement est un procédé de séparation basé sur la variation de solubilité avec la température\footnote{Pour le saccharose, la solubilité diminue de 74 g/100g à 80°C à 67 g/100g à 20°C.}. Le contrôle précis de la sursaturation permet d'optimiser la distribution granulométrique des cristaux (CSD\footnote{\textit{Crystal Size Distribution} -- Distribution de taille des cristaux.}).
+
+\subsection{Équilibre Solide-Liquide}
+
+\subsubsection{Courbe de Solubilité}
+
+La solubilité du saccharose dans l'eau est décrite par le polynôme empirique\footnote{Corrélation valide pour $T \in [20, 90]$°C avec une précision de $\pm 0.1$ g/100g.} :
+
+\begin{equation}
+\boxed{C^*(T) = 64.397 + 0.07251 \, T + 2.056 \times 10^{-3} \, T^2 - 9.035 \times 10^{-6} \, T^3}
+\label{eq:solubility}
+\end{equation}
+
+où $C^*$ est exprimée en g de saccharose par 100 g de solution et $T$ en °C.
+
+\subsubsection{Sursaturation}
+
+La sursaturation relative constitue la force motrice de la cristallisation :
+
+\begin{equation}
+\boxed{S = \frac{C - C^*(T)}{C^*(T)} = \frac{\Delta C}{C^*}}
+\label{eq:supersaturation}
+\end{equation}
+
+La zone métastable\footnote{Zone où la solution sursaturée reste stable sans nucléation spontanée.} correspond typiquement à $S < 0.05$ pour le saccharose.
+
+\subsection{Cinétiques de Cristallisation}
+
+\subsubsection{Nucléation Secondaire}
+
+Le taux de nucléation secondaire\footnote{Nucléation induite par les cristaux existants, dominante en cristallisation industrielle.} suit une loi de puissance empirique :
+
+\begin{equation}
+\boxed{B = k_b \cdot S^b \cdot m_T^j}
+\label{eq:nucleation}
+\end{equation}
+
+avec les paramètres typiques pour le saccharose :
+\begin{itemize}[noitemsep]
+    \item $k_b = 1 \times 10^{12}$ nucléi/m³/s
+    \item $b = 2.0$ (ordre par rapport à la sursaturation)
+    \item $j = 1.0$ (ordre par rapport à la masse cristalline)
+\end{itemize}
+
+\subsubsection{Croissance Cristalline}
+
+La vitesse de croissance linéaire\footnote{Hypothèse de McCabe : croissance indépendante de la taille.} obéit à une loi d'Arrhenius modifiée :
+
+\begin{equation}
+\boxed{G = k_g \cdot S^g \cdot \exp\left(-\frac{E_g}{RT}\right)}
+\label{eq:growth}
+\end{equation}
+
+où $E_g \approx 50$ kJ/mol est l'énergie d'activation de croissance.
+
+\subsection{Équation de Bilan de Population}
+
+L'évolution temporelle de la distribution granulométrique est gouvernée par la PBE\footnote{Équation intégro-différentielle établie par Randolph \& Larson (1971).} :
+
+\begin{equation}
+\boxed{\frac{\partial n}{\partial t} + G \frac{\partial n}{\partial L} = B \, \delta(L - L_0) - D(L)}
+\label{eq:pbe}
+\end{equation}
+
+où $n(L,t)$ est la densité de population (nucléi/m³/m), $L$ la taille caractéristique, et $\delta$ la distribution de Dirac représentant la nucléation à taille $L_0$.
+
+\subsection{Résolution par la Méthode des Moments}
+
+La transformation par les moments\footnote{Cette approche réduit la PBE à un système d'EDO, évitant la discrétisation en taille.} est définie par :
+
+\begin{equation}
+\mu_k(t) = \int_0^{\infty} L^k \cdot n(L,t) \, dL
+\label{eq:moment_def}
+\end{equation}
+
+L'évolution temporelle des quatre premiers moments est :
+
+\begin{equation}
+\boxed{\frac{d\mu_k}{dt} = k \cdot G \cdot \mu_{k-1} + B \cdot L_0^k \quad (k = 0, 1, 2, 3)}
+\label{eq:moment_ode}
+\end{equation}
+
+Les moments donnent accès aux propriétés de la CSD :
+\begin{align}
+L_{10} &= \frac{\mu_1}{\mu_0} \quad \text{(taille moyenne en nombre)} \\
+L_{43} &= \frac{\mu_4}{\mu_3} \quad \text{(diamètre de Sauter)} \\
+\text{CV} &= \sqrt{\frac{\mu_2 \mu_0}{\mu_1^2} - 1} \quad \text{(coefficient de variation)}
+\end{align}
+
+\subsection{Stratégies de Refroidissement}
+
+\subsubsection{Profil Linéaire}
+
+Le refroidissement linéaire, simple à implémenter, provoque une sursaturation excessive au début du batch\footnote{Conduisant à une nucléation massive et des cristaux fins.} :
+
+\begin{equation}
+T(t) = T_0 - \frac{(T_0 - T_f)}{t_{\text{batch}}} \cdot t
+\end{equation}
+
+\subsubsection{Profil Optimal de Mullin-Nyvlt}
+
+Le profil cubique\footnote{Conçu pour maintenir la sursaturation approximativement constante.} produit des cristaux plus gros et plus uniformes :
+
+\begin{equation}
+\boxed{T(t) = T_f + (T_0 - T_f) \cdot \left(1 - \frac{t}{t_{\text{batch}}}\right)^3}
+\label{eq:optimal_cooling}
+\end{equation}
+
+% ============================================================================
+\section{Dimensionnement des Équipements}
+% ============================================================================
+
+\subsection{Surface d'Échange des Évaporateurs}
+
+La surface requise pour chaque effet est calculée par :
+
+\begin{equation}
+\boxed{A_i = \frac{Q_i}{U_i \cdot (T_{\text{vapeur},i-1} - T_{\text{eb},i})}}
+\label{eq:area_evap}
+\end{equation}
+
+\subsection{Volume du Cristallisoir}
+
+Le volume est déterminé par le temps de séjour et la production souhaitée :
+
+\begin{equation}
+V_{\text{crist}} = \dot{m}_{\text{cristaux}} \cdot \tau \cdot \frac{1}{\rho_{\text{slurry}} \cdot \phi_s}
+\end{equation}
+
+où $\phi_s$ est la fraction volumique de solide ($\approx 0.3$ à 0.4).
+
+\subsection{Surface de Refroidissement}
+
+Le serpentin de refroidissement est dimensionné par :
+
+\begin{equation}
+\boxed{A_{\text{serp}} = \frac{Q_{\text{refroid}}}{U_{\text{serp}} \cdot \Delta T_{\text{ml}}}}
+\end{equation}
+
+\subsection{Puissance d'Agitation}
+
+La puissance mécanique pour maintenir les cristaux en suspension\footnote{Critère de Zwietering pour la suspension complète.} :
+
+\begin{equation}
+P = N_p \cdot \rho_{\text{slurry}} \cdot N^3 \cdot D_a^5
+\end{equation}
+
+% ============================================================================
+\section{Analyse Économique}
+% ============================================================================
+
+\subsection{Coût Total Annualisé (TAC)}
+
+\lettrine[lines=2]{L}{}e TAC représente le critère d'optimisation économique principal\footnote{Permet de comparer des configurations avec différents ratios CAPEX/OPEX.} :
+
+\begin{equation}
+\boxed{\text{TAC} = \frac{\text{CAPEX}}{n_{\text{ann}}} + \text{OPEX}}
+\label{eq:tac}
+\end{equation}
+
+où $n_{\text{ann}}$ est la durée d'amortissement (typiquement 10 ans).
+
+\subsection{Estimation du CAPEX}
+
+\subsubsection{Évaporateurs}
+
+Le coût d'investissement suit une loi d'économie d'échelle\footnote{Exposant de 0.6 typique pour les échangeurs de chaleur.} :
+
+\begin{equation}
+C_{\text{évap}} = C_0 \cdot \left(\frac{A}{A_0}\right)^{0.6} \cdot f_{\text{mat}} \cdot f_{\text{pres}} \cdot f_{\text{inst}}
+\end{equation}
+
+avec $C_0 = 30\,000$ €  pour $A_0 = 100$ m², $f_{\text{mat}} = 1.3$ (acier inox), $f_{\text{inst}} = 1.5$.
+
+\subsubsection{Cristallisoir}
+
+\begin{equation}
+C_{\text{crist}} = 15\,000 \cdot V^{0.7} \quad \text{(€)}
+\end{equation}
+
+\subsection{Estimation de l'OPEX}
+
+Les coûts opératoires annuels comprennent :
+
+\begin{align}
+\text{OPEX} &= C_{\text{vapeur}} + C_{\text{élec}} + C_{\text{eau}} + C_{\text{maint}} \\
+C_{\text{vapeur}} &= \dot{m}_S \cdot c_{\text{vap}} \cdot t_{\text{op}} \quad (c_{\text{vap}} \approx 25 \text{ €/tonne}) \\
+C_{\text{maint}} &\approx 0.05 \times \text{CAPEX}
+\end{align}
+
+où $t_{\text{op}} \approx 8000$ h/an pour une opération continue.
+
+\subsection{Optimisation du Nombre d'Effets}
+
+L'augmentation de $n$ réduit l'OPEX (moins de vapeur) mais augmente le CAPEX (plus d'équipements). Le nombre optimal minimisant le TAC se situe entre 3 et 6 effets\footnote{Fortement dépendant du ratio prix vapeur/prix équipement.}.
+
+% ============================================================================
+\section{Intégration Thermique}
+% ============================================================================
+
+\subsection{Analyse Pinch}
+
+La méthode du pincement\footnote{Développée par Linnhoff \textit{et al.} dans les années 1980.} identifie les opportunités de récupération de chaleur entre flux chauds et froids.
+
+\subsubsection{Courbes Composites}
+
+Les courbes composites représentent l'enthalpie cumulée en fonction de la température :
+
+\begin{equation}
+H = \int_{T_1}^{T_2} \sum_{\text{flux}} \dot{m}_j \cdot C_{p,j} \, dT
+\end{equation}
+
+\subsubsection{Point Pinch et $\Delta T_{\min}$}
+
+Le point pinch correspond au plus faible écart entre courbes :
+
+\begin{equation}
+\Delta T_{\min} = \min(T_{\text{chaud}} - T_{\text{froid}})
+\end{equation}
+
+Typiquement $\Delta T_{\min} = 10$ K représente un compromis économique\footnote{Valeur plus faible = plus de récupération mais échangeurs plus grands.}.
+
+\subsection{Potentiel de Récupération}
+
+La chaleur récupérable est bornée par :
+
+\begin{equation}
+\boxed{Q_{\text{récup}} = \min(Q_{\text{chaud,dispo}}, Q_{\text{froid,requis}})}
+\end{equation}
+
+% ============================================================================
+\section{Architecture Logicielle}
+% ============================================================================
+
+\subsection{Vue d'Ensemble}
+
+\lettrine[lines=2]{L}{}e projet CRIST adopte une architecture en couches\footnote{Respectant le principe de séparation des préoccupations (\textit{Separation of Concerns}).} :
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Couche Présentation} : Interface Streamlit + composants Antd
+    \item \textbf{Couche Métier} : Modules de simulation et optimisation
+    \item \textbf{Couche Données} : Configuration, export, persistance
+\end{enumerate}
+
+\subsection{Structure des Fichiers}
+
+\begin{verbatim}
+CRIST/
+├── app.py                    # Point d'entrée, authentification
+├── config.py                 # Paramètres par défaut
+├── pages/                    # Pages Streamlit multipage
+│   ├── 1_Home.py            # Vue d'ensemble
+│   ├── 2_Evaporator.py      # Simulation MEE
+│   ├── 3_Crystallization.py # Simulation cristallisoir
+│   ├── 4_Optimization.py    # Optimisation TAC
+│   ├── 5_Integration.py     # Analyse pinch
+│   └── 6_Results.py         # Export résultats
+├── src/                      # Logique métier
+│   ├── evaporateurs.py      # Modèle MEE (fsolve)
+│   ├── cristallisation.py   # Modèle PBE (odeint)
+│   ├── thermodynamique.py   # Propriétés (CoolProp)
+│   ├── optimisation.py      # TAC + pinch
+│   ├── visualization.py     # Graphiques Plotly
+│   ├── export.py            # Excel/PDF
+│   └── auth.py              # Authentification
+├── .streamlit/secrets.toml   # Credentials (gitignored)
+├── Dockerfile               # Image Docker
+└── requirements.txt         # Dépendances
+\end{verbatim}
+
+\subsection{Modules Principaux}
+
+\begin{description}[style=nextline]
+    \item[\texttt{evaporateurs.py}] Implémente les classes \texttt{EvaporatorEffect} et \texttt{MultiEffectEvaporator}. Résolution séquentielle effet par effet via \texttt{scipy.optimize.fsolve}\footnote{Méthode de Newton-Raphson pour systèmes non-linéaires.}.
+    
+    \item[\texttt{cristallisation.py}] Classe \texttt{BatchCrystallizer} résolvant le système d'EDO des moments par \texttt{scipy.integrate.odeint}\footnote{Intégrateur LSODA adaptatif ordre/pas.}.
+    
+    \item[\texttt{thermodynamique.py}] Interface avec CoolProp\footnote{Bibliothèque open-source implémentant les équations d'état IAPWS-IF97.} pour les propriétés de l'eau/vapeur : $T_{\text{sat}}(P)$, $\lambda(P)$, $\rho$, $\mu$, $C_p$.
+    
+    \item[\texttt{visualization.py}] Génération de graphiques Plotly\footnote{Bibliothèque JavaScript avec binding Python pour visualisation interactive.} : profils de température, courbes de sursaturation, CSD, diagrammes pinch.
+\end{description}
+
+% ============================================================================
+\section{Interface Utilisateur Streamlit}
+% ============================================================================
+
+\subsection{Framework Streamlit}
+
+Streamlit\footnote{\url{https://streamlit.io} -- Framework Python pour applications data/ML.} permet de créer des interfaces web interactives sans expertise frontend. Composants utilisés :
+
+\begin{itemize}[noitemsep]
+    \item \texttt{st.sidebar} : Navigation latérale
+    \item \texttt{st.form} : Formulaires avec validation
+    \item \texttt{st.session\_state} : Persistance inter-pages
+    \item \texttt{st.plotly\_chart} : Graphiques interactifs
+    \item \texttt{st.download\_button} : Export fichiers
+    \item \texttt{st.columns}, \texttt{st.expander} : Layout responsive
+\end{itemize}
+
+\subsection{Authentification}
+
+L'accès à l'application est protégé par authentification\footnote{Credentials stockés dans \texttt{secrets.toml} (local) ou variables d'environnement (production).} :
+
+\begin{enumerate}[noitemsep]
+    \item Formulaire de connexion sur la page principale
+    \item Vérification contre \texttt{st.secrets} ou \texttt{os.environ}
+    \item État stocké dans \texttt{st.session\_state.authenticated}
+    \item Fonction \texttt{require\_auth()} protégeant chaque page
+    \item Bouton déconnexion dans le menu latéral
+\end{enumerate}
+
+\subsection{Navigation avec streamlit-antd-components}
+
+Le package \texttt{streamlit-antd-components}\footnote{Composants Ant Design portés pour Streamlit.} fournit un menu élégant avec :
+
+\begin{itemize}[noitemsep]
+    \item Structure hiérarchique (sous-menus Simulation, Analysis)
+    \item Icônes Bootstrap Icons
+    \item Navigation via \texttt{st.switch\_page()}
+    \item Style professionnel (CSS personnalisé)
+\end{itemize}
+
+\subsection{Pages de l'Application}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Page} & \textbf{Fonctionnalités} \\
+\midrule
+Home & Vue d'ensemble, théorie, paramètres par défaut \\
+Evaporator & Configuration $n$, $F$, $x$, $P$ ; simulation ; analyse de sensibilité \\
+Crystallization & Stratégies de refroidissement ; CSD ; dimensionnement équipement \\
+Optimization & Comparaison configurations ; calcul TAC ; recommandation \\
+Integration & Courbes composites ; point pinch ; récupération chaleur \\
+Results & Dashboard ; export Excel formaté ; génération PDF \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section{Déploiement Docker et Cloud}
+% ============================================================================
+
+\subsection{Conteneurisation Docker}
+
+Docker\footnote{\url{https://docker.com}} encapsule l'application avec ses dépendances pour garantir la reproductibilité\footnote{Élimine le problème ``works on my machine''.}.
+
+\subsubsection{Dockerfile}
+
+\begin{verbatim}
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV STREAMLIT_SERVER_PORT=10000
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+WORKDIR /app
+RUN apt-get update && apt-get install -y build-essential
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+
+RUN useradd --create-home appuser && chown -R appuser /app
+USER appuser
+
+EXPOSE 10000
+CMD ["streamlit", "run", "app.py", "--server.port=10000"]
+\end{verbatim}
+
+\subsubsection{Construction et Publication}
+
+\begin{verbatim}
+docker build -t anastassaoui/crist-app:latest .
+docker login
+docker push anastassaoui/crist-app:latest
+\end{verbatim}
+
+\subsection{Déploiement sur Render}
+
+Render\footnote{\url{https://render.com} -- Plateforme PaaS supportant Docker.} héberge l'application :
+
+\begin{enumerate}[noitemsep]
+    \item Créer un \textit{Web Service} depuis Docker Hub
+    \item Image : \texttt{anastassaoui/crist-app:latest}
+    \item Variables d'environnement : \texttt{CRIST\_USERNAME}, \texttt{CRIST\_PASSWORD}
+    \item Port : 10000
+    \item Auto-deploy sur push
+\end{enumerate}
+
+\subsection{Gestion des Secrets}
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Développement} : \texttt{.streamlit/secrets.toml} (gitignored)
+    \item \textbf{Production} : Variables d'environnement Render
+    \item \textbf{Fallback} : Credentials par défaut si non configurés
+\end{itemize}
+
+% ============================================================================
+\section{Dépendances Technologiques}
+% ============================================================================
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{llp{5.5cm}}
+\toprule
+\textbf{Package} & \textbf{Version} & \textbf{Rôle} \\
+\midrule
+streamlit & $\geq 1.28$ & Framework interface web \\
+streamlit-antd-components & $\geq 0.3$ & Composants UI Ant Design \\
+numpy & $\geq 1.21$ & Calcul matriciel \\
+scipy & $\geq 1.7$ & Solveurs (fsolve, odeint) \\
+pandas & $\geq 1.3$ & Manipulation DataFrames \\
+plotly & $\geq 5.0$ & Visualisation interactive \\
+CoolProp & $\geq 6.4$ & Propriétés thermodynamiques \\
+thermo & $\geq 0.2$ & Propriétés solutions \\
+reportlab & -- & Génération PDF \\
+openpyxl & $\geq 3.0$ & Export Excel \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section{Résultats et Validation}
+% ============================================================================
+
+\subsection{Évaporateur 4 Effets}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Paramètre} & \textbf{Valeur} & \textbf{Unité} \\
+\midrule
+Débit alimentation & 50\,000 & kg/h \\
+Concentration entrée/sortie & 14 / 65 & \% \\
+Économie de vapeur & 3.2 & -- \\
+Surface totale & 850 & m² \\
+Consommation vapeur vive & 12\,500 & kg/h \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Comparaison Stratégies Refroidissement}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Stratégie} & \textbf{$L_{50}$ (µm)} & \textbf{CV (\%)} & \textbf{Rendement} \\
+\midrule
+Linéaire & 250 & 45 & 82\% \\
+Naturel & 320 & 38 & 85\% \\
+Optimal (Mullin-Nyvlt) & 450 & 28 & 91\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section{Conclusion et Perspectives}
+% ============================================================================
+
+\lettrine[lines=2]{L}{}e projet CRIST constitue une solution intégrée couvrant l'ensemble de la chaîne :
+
+\begin{itemize}[noitemsep]
+    \item Modélisation mathématique rigoureuse (bilans, PBE, moments)
+    \item Interface utilisateur moderne (Streamlit + Antd)
+    \item Optimisation économique complète (CAPEX, OPEX, TAC)
+    \item Intégration thermique (analyse pinch)
+    \item Déploiement cloud robuste (Docker + Render)
+    \item Authentification sécurisée
+\end{itemize}
+
+\textbf{Perspectives :} Extension contre-courant, modèles CFD, optimisation dynamique temps-réel, intégration API PLCs industriels.
+
+% ============================================================================
+\section*{Nomenclature}
+\addcontentsline{toc}{section}{Nomenclature}
+
+\begin{tabular}{lll}
+\toprule
+$A$ & Surface d'échange & m² \\
+$B$ & Taux de nucléation & nucléi/m³/s \\
+$C, C^*$ & Concentration, solubilité & g/100g \\
+$C_p$ & Capacité calorifique & kJ/kg·K \\
+$G$ & Vitesse de croissance & m/s \\
+$L$ & Taille cristalline & m \\
+$n$ & Densité de population & nucléi/m³/m \\
+$Q$ & Flux thermique & kW \\
+$S$ & Sursaturation & -- \\
+$T$ & Température & °C \\
+$U$ & Coefficient transfert & W/m²·K \\
+$V$ & Débit vapeur & kg/h \\
+$\lambda$ & Chaleur latente & kJ/kg \\
+$\mu_k$ & Moment ordre $k$ & m$^k$/m³ \\
+\bottomrule
+\end{tabular}
+
+\end{document}

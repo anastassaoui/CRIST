@@ -3,12 +3,15 @@ Home Page - Project Overview
 """
 
 import streamlit as st
+from src.auth import require_auth, add_sidebar_menu
 
-st.set_page_config(page_title="Home", page_icon="🏠", layout="wide")
+st.set_page_config(page_title="Home", page_icon="H", layout="wide")
+
+# Require authentication
+require_auth()
+add_sidebar_menu('Home')
 
 st.title("Home - Project Overview")
-
-st.info("This is the home page. Please return to the main page or select another page from the sidebar.")
 
 st.markdown("""
 ### Available Pages

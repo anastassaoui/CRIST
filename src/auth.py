@@ -33,6 +33,7 @@ def add_sidebar_menu(current_page: str = None):
         'Optimization': 5,
         'Integration': 6,
         'Results': 7,
+        'AI Assistant': 8,
     }
     
     default_index = page_index_map.get(current_page, 0)
@@ -60,6 +61,7 @@ def add_sidebar_menu(current_page: str = None):
                 sac.MenuItem('Integration', icon='link-45deg'),
             ]),
             sac.MenuItem('Results', icon='file-earmark-bar-graph-fill'),
+            sac.MenuItem('AI Assistant', icon='robot'),
             sac.MenuItem(type='divider'),
             sac.MenuItem('Logout', icon='box-arrow-right'),
         ], open_all=True, index=default_index)
@@ -83,6 +85,8 @@ def add_sidebar_menu(current_page: str = None):
                 st.switch_page("pages/5_Integration.py")
             elif selected == 'Results':
                 st.switch_page("pages/6_Results.py")
+            elif selected == 'AI Assistant':
+                st.switch_page("pages/7_AI_Assistant.py")
         
         st.markdown("---")
         st.markdown("**CRIST Simulator**")

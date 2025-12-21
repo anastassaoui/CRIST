@@ -59,13 +59,23 @@ def get_credentials():
     try:
         return st.secrets["auth"]["username"], st.secrets["auth"]["password"]
     except (KeyError, FileNotFoundError):
-        # Default credentials if nothing is configured
-        return "admin", "crist2024"
+        return None, None
 
 def check_password():
     """Returns True if the user has entered correct credentials."""
     
     expected_username, expected_password = get_credentials()
+    
+    # Check if credentials are configured
+    if not expected_username or not expected_password:
+        st.error("""
+        **Credentials not configured!**
+        
+        Please set up authentication:
+        - **Local**: Add to `.streamlit/secrets.toml`
+        - **Render**: Set `CRIST_USERNAME` and `CRIST_PASSWORD` environment variables
+        """)
+        st.stop()
     
     def password_entered():
         """Checks whether the password entered by the user is correct."""
@@ -126,6 +136,7 @@ with st.sidebar:
             sac.MenuItem('Integration', icon='link-45deg'),
         ]),
         sac.MenuItem('Results', icon='file-earmark-bar-graph-fill'),
+        sac.MenuItem('AI Assistant', icon='robot'),
         sac.MenuItem(type='divider'),
         sac.MenuItem('Logout', icon='box-arrow-right', disabled=False),
     ], open_all=True, index=0)
@@ -146,6 +157,8 @@ with st.sidebar:
         st.switch_page("pages/5_Integration.py")
     elif selected == 'Results':
         st.switch_page("pages/6_Results.py")
+    elif selected == 'AI Assistant':
+        st.switch_page("pages/7_AI_Assistant.py")
     
     st.markdown("---")
     st.markdown("**CRIST Simulator**")

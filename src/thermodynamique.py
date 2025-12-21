@@ -99,6 +99,7 @@ def get_latent_heat(P):
 def boiling_point_elevation(x_saccharose, P=101325):
     """
     Calculate boiling point elevation (BPE) for saccharose solution using Dühring correlation.
+    From PDF page 4, equations 3-5.
 
     Parameters:
     -----------
@@ -111,17 +112,19 @@ def boiling_point_elevation(x_saccharose, P=101325):
     --------
     float : Boiling point elevation in °C
     """
-    # Get pure water boiling point at this pressure
-    T_water = get_saturation_temperature(P)
+    # Convert to percentage (0-100)
+    x_percent = x_saccharose * 100
 
-    # Dühring correlation for sugar solutions
-    # BPE increases with concentration
-    # Empirical correlation: BPE ≈ k * x * (1 + a*x)
-    # For saccharose solutions
-    k = 0.5  # Base coefficient
-    a = 1.2  # Nonlinearity factor
+    # Dühring correlation coefficients (PDF page 4)
+    # EPE = A·x + B·x²
+    if x_percent < 50:
+        A = 0.03
+        B = 0.00015
+    else:
+        A = 0.045
+        B = 0.0003
 
-    BPE = k * x_saccharose * 100 * (1 + a * x_saccharose)
+    BPE = A * x_percent + B * x_percent**2
 
     return BPE
 
@@ -129,6 +132,7 @@ def boiling_point_elevation(x_saccharose, P=101325):
 def solution_enthalpy(T, x_saccharose):
     """
     Calculate specific enthalpy of saccharose solution.
+    Reference: 0°C for water and saccharose.
 
     Parameters:
     -----------
@@ -141,17 +145,15 @@ def solution_enthalpy(T, x_saccharose):
     --------
     float : Specific enthalpy in J/kg
     """
-    # Get pure water enthalpy
-    h_water = get_water_properties(T=T, P=101325, property_name='H')
-
-    # Heat capacity of saccharose (approximate)
+    # Heat capacities (from PDF page 4, equation 7)
+    cp_water = 4180  # J/(kg·K)
     cp_saccharose = 1250  # J/(kg·K)
 
-    # Mixing enthalpy (negative, exothermic dissolution)
-    h_mix = -50000 * x_saccharose * (1 - x_saccharose)  # J/kg
+    # Mass-weighted heat capacity
+    cp_solution = (1 - x_saccharose) * cp_water + x_saccharose * cp_saccharose
 
-    # Solution enthalpy (mass-weighted average plus mixing term)
-    h_solution = (1 - x_saccharose) * h_water + x_saccharose * cp_saccharose * T + h_mix
+    # Enthalpy relative to 0°C (simple model)
+    h_solution = cp_solution * T
 
     return h_solution
 

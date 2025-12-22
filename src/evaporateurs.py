@@ -179,6 +179,10 @@ class EvaporatorEffect:
         # Apply heat loss factor
         self.Q_heating *= (1 + config.HEAT_LOSS_FRACTION)
 
+        # Apply heat loss BEFORE calculating area (PDF page 7, equation 15)
+        # Must provide more heat to compensate for losses
+        self.Q_heating = self.Q_heating / (1 - config.HEAT_LOSS_FRACTION)
+
         # Heat transfer calculation
         self.U = heat_transfer_coefficient_evaporator(self.T_boiling, self.x_out, self.effect_number)
         delta_T = T_heating_medium - self.T_boiling
@@ -187,12 +191,16 @@ class EvaporatorEffect:
         if delta_T > 0 and self.U > 0 and self.Q_heating > 0:
             self.A_heat_transfer = self.Q_heating / (self.U * delta_T)
         else:
+<<<<<<< HEAD
             # If driving force is invalid, estimate area based on typical values
             # This can happen if heating medium temperature is too close to boiling point
             self.A_heat_transfer = abs(self.Q_heating) / (self.U * max(delta_T, 5))  # Minimum 5°C driving force
         
         # Ensure area is always positive
         self.A_heat_transfer = max(self.A_heat_transfer, 0.1)
+=======
+            self.A_heat_transfer = 0
+>>>>>>> c57848ad871fcd7f1e76f281a9c3c3f06b5f6860
 
         return {
             'L_out': self.L_out,
@@ -240,7 +248,10 @@ class MultiEffectEvaporator:
         self.x_final = x_final
 
         # Create pressure profile (linear distribution)
-        self.pressures = np.linspace(P_steam * 0.7, P_condenser, n_effects)
+        # First effect operates at lower pressure than steam (to allow condensation)
+        # Typical range: from ~60% of steam pressure down to condenser pressure
+        P_first_effect = P_steam * 0.6
+        self.pressures = np.linspace(P_first_effect, P_condenser, n_effects)
 
         # Create effects
         self.effects = [EvaporatorEffect(i + 1, self.pressures[i]) for i in range(n_effects)]
@@ -362,7 +373,8 @@ class MultiEffectEvaporator:
 
             # Re-initialize if needed
             if parameter == 'P_steam':
-                self.pressures = np.linspace(value * 0.7, self.P_condenser, self.n_effects)
+                P_first_effect = value * 0.6
+                self.pressures = np.linspace(P_first_effect, self.P_condenser, self.n_effects)
                 self.effects = [EvaporatorEffect(i + 1, self.pressures[i]) for i in range(self.n_effects)]
 
             # Solve

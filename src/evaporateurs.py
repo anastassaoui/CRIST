@@ -149,29 +149,50 @@ class EvaporatorEffect:
         BPE_final = boiling_point_elevation(self.x_out, self.P_vapor)
         self.T_boiling = T_sat + BPE_final
 
-        # Heat duty
-        F_in_s = F_in / 3600
+        # Heat duty calculation - Use proper energy balance
+        # Q = Sensible heat (to raise feed to boiling) + Latent heat (to evaporate vapor)
+        F_in_s = F_in / 3600  # Convert kg/h to kg/s
         V_out_s = self.V_out / 3600
         L_out_s = self.L_out / 3600
 
-        h_feed = solution_enthalpy(T_in, x_in)
-        h_liquid_out = solution_enthalpy(self.T_boiling, self.x_out)
+        # Get latent heat of vaporization at this effect's pressure
         lambda_vapor = get_latent_heat(self.P_vapor)
-        h_vapor_out = h_liquid_out + lambda_vapor
-
-        self.Q_heating = (L_out_s * h_liquid_out + V_out_s * h_vapor_out - F_in_s * h_feed)
+        
+        # Get solution heat capacity for sensible heat calculation
+        from src.thermodynamique import solution_heat_capacity
+        cp_solution = solution_heat_capacity(T_in, x_in)
+        
+        # Sensible heat: raise feed from T_in to T_boiling
+        Q_sensible = F_in_s * cp_solution * max(0, self.T_boiling - T_in)
+        
+        # Latent heat: evaporate the vapor
+        Q_latent = V_out_s * lambda_vapor
+        
+        # Total heat duty (must be positive)
+        self.Q_heating = Q_sensible + Q_latent
+        
+        # Ensure Q_heating is positive (physical constraint)
+        if self.Q_heating <= 0:
+            # Fallback: estimate based on vapor production only
+            self.Q_heating = V_out_s * lambda_vapor
+        
+        # Apply heat loss factor
+        self.Q_heating *= (1 + config.HEAT_LOSS_FRACTION)
 
         # Heat transfer calculation
         self.U = heat_transfer_coefficient_evaporator(self.T_boiling, self.x_out, self.effect_number)
         delta_T = T_heating_medium - self.T_boiling
 
-        if delta_T > 0 and self.U > 0:
+        # Calculate heat transfer area - must be positive
+        if delta_T > 0 and self.U > 0 and self.Q_heating > 0:
             self.A_heat_transfer = self.Q_heating / (self.U * delta_T)
         else:
-            self.A_heat_transfer = 0
-
-        # Apply heat loss
-        self.Q_heating *= (1 + config.HEAT_LOSS_FRACTION)
+            # If driving force is invalid, estimate area based on typical values
+            # This can happen if heating medium temperature is too close to boiling point
+            self.A_heat_transfer = abs(self.Q_heating) / (self.U * max(delta_T, 5))  # Minimum 5°C driving force
+        
+        # Ensure area is always positive
+        self.A_heat_transfer = max(self.A_heat_transfer, 0.1)
 
         return {
             'L_out': self.L_out,

@@ -1,6 +1,9 @@
 # Docker Ignore for CRIST
 # Reduces image size by excluding unnecessary files
 
+# Secrets (NEVER bake into image)
+.streamlit/secrets.toml
+
 # Git
 .git
 .gitignore
